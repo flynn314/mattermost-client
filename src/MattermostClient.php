@@ -20,6 +20,11 @@ class MattermostClient
         $this->token = $token;
     }
 
+    public function messageGet(string $messageId): array
+    {
+        return $this->request('get', 'api/v4/posts/'.$messageId);
+    }
+
     public function messagePost(string $channelId, string $message): array
     {
         $data = [
@@ -28,6 +33,15 @@ class MattermostClient
         ];
 
         return $this->request('post', 'api/v4/posts', $data);
+    }
+
+    public function messageEdit(string $messageId, string $message): array
+    {
+        $data = [
+            'message' => $message,
+        ];
+
+        return $this->request('put', sprintf('api/v4/posts/%s/patch', $messageId), $data);
     }
 
     public function filePost(string $channelId, string $file, ?string $caption = null): array
@@ -64,6 +78,11 @@ class MattermostClient
         $data = $data['file_infos'][0] ?? [];
 
         return $data;
+    }
+
+    public function deletePost(string $messageId): array
+    {
+        return $this->request('delete', 'api/v4/posts/' . $messageId);
     }
 
     /**
