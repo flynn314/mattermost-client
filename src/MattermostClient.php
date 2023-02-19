@@ -20,17 +20,26 @@ class MattermostClient
         $this->token = $token;
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function messageGet(string $messageId): array
     {
         return $this->request('get', 'api/v4/posts/'.$messageId);
     }
 
-    public function messagePost(string $channelId, string $message): array
+    /**
+     * @throws MattermostClientException
+     */
+    public function messagePost(string $channelId, string $message, ?string $rootId = null): array
     {
         $data = [
             'channel_id' => $channelId,
             'message' => $message,
         ];
+        if ($rootId) {
+            $data['root_id'] = $rootId;
+        }
 
         return $this->request('post', 'api/v4/posts', $data);
     }
@@ -44,15 +53,18 @@ class MattermostClient
         return $this->request('put', sprintf('api/v4/posts/%s/patch', $messageId), $data);
     }
 
-    public function filePost(string $channelId, string $file, ?string $caption = null): array
+    /**
+     * @throws MattermostClientException
+     */
+    public function filePost(string $channelId, string $file, ?string $caption = null, ?string $rootId = null): array
     {
-        return $this->filePostGallery($channelId, [$file], $caption);
+        return $this->filePostGallery($channelId, [$file], $caption, $rootId);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function filePostGallery(string $channelId, array $files, ?string $caption = null): array
+    public function filePostGallery(string $channelId, array $files, ?string $caption = null, ?string $rootId = null): array
     {
         $filesIds = [];
         foreach ($files as $file) {
@@ -67,6 +79,9 @@ class MattermostClient
             'channel_id' => $channelId,
             'file_ids' => $filesIds,
         ];
+        if ($rootId) {
+            $data['root_id'] = $rootId;
+        }
         if ($caption) {
             $data['message'] = $caption;
         }
