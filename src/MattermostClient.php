@@ -98,6 +98,9 @@ class MattermostClient
         return $data;
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function deletePost(string $messageId): array
     {
         return $this->request('delete', 'api/v4/posts/' . $messageId);
