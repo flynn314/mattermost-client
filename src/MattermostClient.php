@@ -46,11 +46,26 @@ class MattermostClient
 
     public function filePost(string $channelId, string $file, ?string $caption = null): array
     {
-        $file = $this->fileUpload($channelId, $file);
+        return $this->filePostGallery($channelId, [$file], $caption);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function filePostGallery(string $channelId, array $files, ?string $caption = null): array
+    {
+        $filesIds = [];
+        foreach ($files as $file) {
+            $file = $this->fileUpload($channelId, $file);
+            $filesIds[] = $file['id'];
+            if (count($filesIds) >= 10) {
+                break;
+            }
+        }
 
         $data = [
             'channel_id' => $channelId,
-            'file_ids' => [$file['id']],
+            'file_ids' => $filesIds,
         ];
         if ($caption) {
             $data['message'] = $caption;
@@ -59,6 +74,9 @@ class MattermostClient
         return $this->request('post', 'api/v4/posts', $data);
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function fileUpload(string $channelId, string $file): array
     {
         //if (strstr($file, 'https://') || strstr($file, 'http://')) {
