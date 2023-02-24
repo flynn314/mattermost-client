@@ -1,6 +1,4 @@
 <?php
-declare(strict_types=1);
-
 namespace Flynn314\Mattermost;
 
 use Flynn314\Mattermost\Exception\MattermostClientException;
@@ -31,12 +29,10 @@ class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function messagePost(string $channelId, string $message, ?string $rootId = null): array
+    public function messagePost(string $channelId, string $message, ?string $rootId = null, array $data = []): array
     {
-        $data = [
-            'channel_id' => $channelId,
-            'message' => $message,
-        ];
+        $data['channel_id'] = $channelId;
+        $data['message'] = $message;
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
@@ -44,6 +40,18 @@ class MattermostClient
         return $this->request('post', 'api/v4/posts', $data);
     }
 
+    /**
+     * This method will works only with Laravel
+     * @throws MattermostClientException
+     */
+    public function messagePostToGeneral(string $message, ?string $rootId = null): array
+    {
+        return $this->messagePost(config('mattermost.channel.general'), $message, $rootId);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
     public function messageEdit(string $messageId, string $message): array
     {
         $data = [
@@ -62,9 +70,18 @@ class MattermostClient
     }
 
     /**
+     * This method requires Laravel config
      * @throws MattermostClientException
      */
-    public function filePostGallery(string $channelId, array $files, ?string $caption = null, ?string $rootId = null): array
+    public function filePostToGeneral(string $file, ?string $caption = null, ?string $rootId = null): array
+    {
+        return $this->filePost(config('mattermost.channel.general'), $file, $caption, $rootId);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function filePostGallery(string $channelId, array $files, ?string $caption = null, ?string $rootId = null, array $data = []): array
     {
         $filesIds = [];
         foreach ($files as $file) {
@@ -75,10 +92,8 @@ class MattermostClient
             }
         }
 
-        $data = [
-            'channel_id' => $channelId,
-            'file_ids' => $filesIds,
-        ];
+        $data['channel_id'] = $channelId;
+        $data['file_ids'] = $filesIds;
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
@@ -90,27 +105,42 @@ class MattermostClient
     }
 
     /**
+     * This method requires Laravel config
      * @throws MattermostClientException
      */
-    public function fileUpload(string $channelId, string $file): array
+    public function filePostGalleryToGeneral(string $channelId, array $files, ?string $caption = null, ?string $rootId = null): array
+    {
+        return $this->filePostGallery(config('mattermost.channel.general'), $files, $caption, $rootId);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function fileUpload(string $channelId, string $file, array $data = []): array
     {
         //if (strstr($file, 'https://') || strstr($file, 'http://')) {
             $filename = basename($file);
             $fileData = file_get_contents($file);
         //}
 
-        $data = [
-            // 'channel_id' => $channelId,
-            'binary' => $fileData,
-            // 'client_ids' => [],
-        ];
+        // $data['channel_id'] = $channelId;
+        $data['binary'] = $fileData;
+        // $data['client_ids'] = [];
 
         $data =  $this->request('post', 'api/v4/files?channel_id='.$channelId.'&filename='.$filename, $data, [
             'enctype' => 'multipart/form-data'
         ]);
-        $data = $data['file_infos'][0] ?? [];
 
-        return $data;
+        return $data['file_infos'][0] ?? [];
+    }
+
+    /**
+     * This method requires Laravel config
+     * @throws MattermostClientException
+     */
+    public function fileUploadToGeneral(string $file): array
+    {
+        return $this->fileUpload(config('mattermost.channel.general'), $file);
     }
 
     /**
@@ -144,6 +174,7 @@ class MattermostClient
         }
 
         try {
+            // todo PSR-7
             $response = $this->httpClient->request($method, $uri, $options);
             $content = $response->getBody()->getContents();
 
