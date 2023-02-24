@@ -23,25 +23,27 @@ class MattermostClient
      */
     public function messageGet(string $messageId): array
     {
-        return $this->request('get', 'api/v4/posts/'.$messageId);
+        return $this->request('get', 'api/v4/posts'.$messageId);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function messagePost(string $channelId, string $message, ?string $rootId = null, array $data = []): array
+    public function messagePost(string $channelId, string $message, ?string $rootId = null): array
     {
-        $data['channel_id'] = $channelId;
-        $data['message'] = $message;
+        $data = [
+            'channel_id' => $channelId,
+            'message' => $message,
+        ];
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
 
-        return $this->request('post', 'api/v4/posts', $data);
+        return $this->dataPost($data);
     }
 
     /**
-     * This method will works only with Laravel
+     * This method will work only with Laravel
      * @throws MattermostClientException
      */
     public function messagePostToGeneral(string $message, ?string $rootId = null): array
@@ -81,7 +83,7 @@ class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function filePostGallery(string $channelId, array $files, ?string $caption = null, ?string $rootId = null, array $data = []): array
+    public function filePostGallery(string $channelId, array $files, ?string $caption = null, ?string $rootId = null): array
     {
         $filesIds = [];
         foreach ($files as $file) {
@@ -92,8 +94,10 @@ class MattermostClient
             }
         }
 
-        $data['channel_id'] = $channelId;
-        $data['file_ids'] = $filesIds;
+        $data = [
+            'channel_id' => $channelId,
+            'file_ids' => $filesIds,
+        ];
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
@@ -101,7 +105,7 @@ class MattermostClient
             $data['message'] = $caption;
         }
 
-        return $this->request('post', 'api/v4/posts', $data);
+        return $this->dataPost($data);
     }
 
     /**
@@ -116,15 +120,17 @@ class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function fileUpload(string $channelId, string $file, array $data = []): array
+    public function fileUpload(string $channelId, string $file): array
     {
         //if (strstr($file, 'https://') || strstr($file, 'http://')) {
             $filename = basename($file);
             $fileData = file_get_contents($file);
         //}
 
+        $data = [
+            'binary' => $fileData,
+        ];
         // $data['channel_id'] = $channelId;
-        $data['binary'] = $fileData;
         // $data['client_ids'] = [];
 
         $data =  $this->request('post', 'api/v4/files?channel_id='.$channelId.'&filename='.$filename, $data, [
@@ -148,8 +154,17 @@ class MattermostClient
      */
     public function deletePost(string $messageId): array
     {
-        return $this->request('delete', 'api/v4/posts/' . $messageId);
+        return $this->request('delete', 'api/v4/posts' . $messageId);
     }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function dataPost(array $data): array
+    {
+        return $this->request('post', 'api/v4/posts', $data);
+    }
+
 
     /**
      * @throws MattermostClientException
