@@ -76,4 +76,19 @@ class ClientTest extends TestCase
 
         $this->assertEquals($name, $response['metadata']['files'][0]['name']);
     }
+
+    public function testWebhookPost(): void
+    {
+        $response = $this->mmClient->postWebhook([
+            'channel' => 'test',
+            'text' => 'asd',
+        ], getenv('MM_TOKEN_WEBHOOK'));
+        $this->assertEquals('ok', $response['message']);
+
+        $response = $this->mmClient->postWebhookWithFace('asdsd', 'https://mattermost.com/wp-content/uploads/2022/02/icon.png', [
+            'channel' => 'test',
+            'text' => 'asd',
+        ], getenv('MM_TOKEN_WEBHOOK'));
+        $this->assertEquals('ok', $response['message']);
+    }
 }

@@ -165,6 +165,19 @@ class MattermostClient
         return $this->request('post', 'api/v4/posts', $data);
     }
 
+    public function postWebhook(array $data, string $webhookKey): array
+    {
+        return $this->request('post', 'hooks/' . $webhookKey, $data);
+    }
+
+    public function postWebhookWithFace(string $username, string $photo, array $data, string $webhookKey): array
+    {
+        $data['username'] = $username;
+        $data['icon_url'] = $photo;
+
+        return $this->postWebhook($data, $webhookKey);
+    }
+
 
     /**
      * @throws MattermostClientException
@@ -192,6 +205,11 @@ class MattermostClient
             // todo PSR-7
             $response = $this->httpClient->request($method, $uri, $options);
             $content = $response->getBody()->getContents();
+            if ('ok' === $content) {
+                return [
+                    'message' => $content,
+                ];
+            }
 
             return json_decode($content, true);
         } catch (GuzzleException $e) {
