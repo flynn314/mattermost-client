@@ -1,5 +1,5 @@
 <?php
-namespace Tests;
+namespace Flynn314\Mattermost\Tests;
 
 use Flynn314\Mattermost\MattermostClient;
 use GuzzleHttp\Client;
@@ -64,7 +64,7 @@ class ClientTest extends TestCase
     public function testDelete(): void
     {
         $response = $this->mmClient->messagePost($this->channel, 'This message should be delete after 5sec');
-        sleep(5);
+        sleep(1);
         $this->mmClient->deletePost($response['id']);
 
         $name = 'screw_propelled_vehicle.gif';
