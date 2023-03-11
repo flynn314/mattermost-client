@@ -154,7 +154,7 @@ class MattermostClient
      */
     public function deletePost(string $messageId): array
     {
-        return $this->request('delete', 'api/v4/posts' . $messageId);
+        return $this->request('delete', 'api/v4/posts/' . $messageId);
     }
 
     /**
