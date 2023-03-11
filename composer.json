@@ -23,13 +23,6 @@
             "Flynn314\\Mattermost\\Tests\\": "tests/"
         }
     },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Flynn314\\Mattermost\\MattermostServiceProvider"
-            ]
-        }
-    },
 	"minimum-stability": "dev",
 	"prefer-stable": true
 }
