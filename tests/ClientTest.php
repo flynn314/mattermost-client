@@ -17,13 +17,11 @@ class ClientTest extends TestCase
     {
         parent::__construct($name, $data, $dataName);
 
-        $baseUrl = getenv('MM_BASE_URL');
-        $token = getenv('MM_TOKEN');
-        $this->channel = getenv('MM_CHANNEL');
+        $baseUrl = $_ENV['MM_BASE_URL'];
+        $token = $_ENV['MM_TOKEN'];
+        $this->channel = $_ENV['MM_CHANNEL'];
 
-        $httpClient = new Client();
-
-        $this->mmClient = new MattermostClient($baseUrl, $token, $httpClient);
+        $this->mmClient = new MattermostClient($baseUrl, $token, new Client());
     }
 
     public function testMessageSend(): void
@@ -82,13 +80,14 @@ class ClientTest extends TestCase
         $response = $this->mmClient->postWebhook([
             'channel' => 'test',
             'text' => 'asd',
-        ], getenv('MM_TOKEN_WEBHOOK'));
+        ], $_ENV['MM_TOKEN_WEBHOOK']);
+
         $this->assertEquals('ok', $response['message']);
 
         $response = $this->mmClient->postWebhookWithFace('asdsd', 'https://mattermost.com/wp-content/uploads/2022/02/icon.png', [
             'channel' => 'test',
             'text' => 'asd',
-        ], getenv('MM_TOKEN_WEBHOOK'));
+        ], $_ENV['MM_TOKEN_WEBHOOK']);
         $this->assertEquals('ok', $response['message']);
     }
 }
