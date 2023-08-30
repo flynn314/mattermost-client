@@ -5,18 +5,13 @@ use Flynn314\Mattermost\Exception\MattermostClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Client\ClientInterface;
 
-class MattermostClient
+readonly class MattermostClient
 {
-    private ClientInterface $httpClient;
-    private string $baseUrl;
-    private string $token;
-
-    public function __construct(string $baseUrl, string $token, ClientInterface $httpClient)
-    {
-        $this->httpClient = $httpClient;
-        $this->baseUrl = $baseUrl;
-        $this->token = $token;
-    }
+    public function __construct(
+        private string $baseUrl,
+        private string $token,
+        private ClientInterface $httpClient
+    ) {}
 
     /**
      * @throws MattermostClientException
@@ -37,6 +32,31 @@ class MattermostClient
         ];
         if ($rootId) {
             $data['root_id'] = $rootId;
+        }
+
+        return $this->dataPost($data);
+    }
+
+    public function messagePostWithFace(string $channelId, string $message, ?string $rootId = null, ?string $overrideUsername = null, ?string $overrideAvatar = null): array
+    {
+        $data = [
+            'channel_id' => $channelId,
+            'message' => $message,
+        ];
+        if ($rootId) {
+            $data['root_id'] = $rootId;
+        }
+        if ($overrideAvatar || $overrideUsername) {
+            $data['props'] = [
+                'from_bot' => "true",
+                'from_webhook' => "true",
+            ];
+            if ($overrideAvatar) {
+                $data['props']['override_icon_url'] = $overrideAvatar;
+            }
+            if ($overrideUsername) {
+                $data['props']['override_username'] = $overrideUsername;
+            }
         }
 
         return $this->dataPost($data);
@@ -69,6 +89,14 @@ class MattermostClient
     public function filePost(string $channelId, string $file, ?string $caption = null, ?string $rootId = null): array
     {
         return $this->filePostGallery($channelId, [$file], $caption, $rootId);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function filePostBinary(string $channelId, string $fileData, string $filename, ?string $caption = null, ?string $rootId = null, ?string $overrideUsername = null, ?string $overrideAvatar = null): array
+    {
+        return $this->filePostGalleryWithFace($channelId, [$filename => $fileData], $caption, $rootId, $overrideUsername, $overrideAvatar);
     }
 
     /**
@@ -109,6 +137,47 @@ class MattermostClient
     }
 
     /**
+     * @throws MattermostClientException
+     */
+    public function filePostGalleryWithFace(string $channelId, array $files, ?string $caption = null, ?string $rootId = null, ?string $overrideUsername = null, ?string $overrideAvatar = null): array
+    {
+        $filesIds = [];
+        foreach ($files as $filename => $fileData) {
+            $file = $this->fileUploadBinary($channelId, $fileData, $filename);
+            $filesIds[] = $file['id'];
+            if (count($filesIds) >= 10) {
+                break;
+            }
+        }
+
+        $data = [
+            'channel_id' => $channelId,
+            'file_ids' => $filesIds,
+        ];
+        if ($rootId) {
+            $data['root_id'] = $rootId;
+        }
+        if ($caption) {
+            $data['message'] = $caption;
+        }
+
+        if ($overrideAvatar || $overrideUsername) {
+            $data['props'] = [
+                'from_bot' => "true",
+                'from_webhook' => "true",
+            ];
+            if ($overrideAvatar) {
+                $data['props']['override_icon_url'] = $overrideAvatar;
+            }
+            if ($overrideUsername) {
+                $data['props']['override_username'] = $overrideUsername;
+            }
+        }
+
+        return $this->dataPost($data);
+    }
+
+    /**
      * This method requires Laravel config
      * @throws MattermostClientException
      */
@@ -138,6 +207,20 @@ class MattermostClient
         ]);
 
         return $data['file_infos'][0] ?? [];
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function fileUploadBinary(string $channelId, string $fileData, string $filename, array $data = []): array
+    {
+        $data['binary'] = $fileData;
+
+        $response = $this->request('post', 'api/v4/files?channel_id='.$channelId.'&filename='.$filename, $data, [
+            'enctype' => 'multipart/form-data'
+        ]);
+
+        return $response['file_infos'][0] ?? [];
     }
 
     /**

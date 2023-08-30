@@ -59,6 +59,17 @@ class ClientTest extends TestCase
         $this->assertEquals($name, $response['metadata']['files'][0]['name']);
     }
 
+    public function testFileUploadBinary(): void
+    {
+        $name = 'screw_propelled_vehicle.gif';
+        $filePath = dirname(__DIR__).'/tests/resources/' . $name;
+        $fileData = file_get_contents($filePath);
+
+        $response = $this->mmClient->filePostBinary($this->channel, $fileData, 'test_binary_file.gif');
+
+        $this->assertEquals($name, $response['metadata']['files'][0]['name']);
+    }
+
     public function testDelete(): void
     {
         $response = $this->mmClient->messagePost($this->channel, 'This message should be delete after 5sec');
