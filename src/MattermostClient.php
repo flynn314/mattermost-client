@@ -261,7 +261,7 @@ readonly class MattermostClient
         return $this->postWebhook($data, $webhookKey);
     }
 
-    public function setCustomStatus(string $userId, string $emoji, string $text, ?\DateTimeInterface $expiration): array
+    public function setCustomStatus(string $userId, string $emoji, string $text, ?\DateTimeInterface $expiration = null): array
     {
         $data = [];
         $data['emoji'] = $emoji;
