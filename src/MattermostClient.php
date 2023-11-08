@@ -261,6 +261,32 @@ readonly class MattermostClient
         return $this->postWebhook($data, $webhookKey);
     }
 
+    public function setCustomStatus(string $userId, string $emoji, string $text, ?\DateTimeInterface $expiration): array
+    {
+        $data = [];
+        $data['emoji'] = $emoji;
+        $data['text'] = $text;
+        // todo
+        // https://api.mattermost.com/#tag/status/operation/UpdateUserCustomStatus
+        // $data['duration'] = 'thirty_minutes'; // thirty_minutes, one_hour, four_hours, today, this_week or date_and_time
+        if ($expiration instanceof \DateTimeInterface) {
+            $data['expires_at'] = $expiration->format(\DateTimeInterface::ATOM); // '2030-10-31T01:30:00.000-05:00'
+        }
+
+        return $this->request(
+            method: 'put',
+            uri: sprintf('api/v4/users/%s/status/custom', $userId),
+            data: $data
+        );
+    }
+
+    public function unsetCustomStatus(string $userId): array
+    {
+        return $this->request(
+            method: 'delete',
+            uri: sprintf('api/v4/users/%s/status/custom', $userId),
+        );
+    }
 
     /**
      * @throws MattermostClientException

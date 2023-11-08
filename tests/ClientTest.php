@@ -12,6 +12,7 @@ class ClientTest extends TestCase
 {
     private MattermostClient $mmClient;
     private string $channel;
+    private string $userId;
 
     public function __construct($name = null, array $data = [], $dataName = '')
     {
@@ -20,8 +21,23 @@ class ClientTest extends TestCase
         $baseUrl = $_ENV['MM_BASE_URL'];
         $token = $_ENV['MM_TOKEN'];
         $this->channel = $_ENV['MM_CHANNEL'];
+        $this->userId = $_ENV['MM_USER_ID'];
 
         $this->mmClient = new MattermostClient($baseUrl, $token, new Client());
+    }
+
+    /**
+     * vendor/bin/phpunit --filter=testCustomStatus
+     */
+    public function testCustomStatus(): void
+    {
+        $response = $this->mmClient->setCustomStatus($this->userId, 'doomgod', 'Testing', new \DateTime('+2 days'));
+        $this->assertEquals('OK', $response['status']);
+
+        sleep(3);
+
+        $response = $this->mmClient->unsetCustomStatus($this->userId);
+        $this->assertEquals('OK', $response['status']);
     }
 
     public function testMessageSend(): void
