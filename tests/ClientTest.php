@@ -31,10 +31,16 @@ class ClientTest extends TestCase
      */
     public function testCustomStatus(): void
     {
-        $response = $this->mmClient->setCustomStatus($this->userId, 'doomgod', 'Testing', new \DateTime('+2 days'));
+        $plusTwoDaysDate = new \DateTime('+2 days');
+        $response = $this->mmClient->setCustomStatus($this->userId, 'doomgod', 'Testing', $plusTwoDaysDate);
         $this->assertEquals('OK', $response['status']);
 
-        sleep(3);
+        sleep(2);
+        $customStatus = $this->mmClient->getCustomStatus($this->userId);
+        $this->assertEquals('doomgod', $customStatus->getEmoji());
+        $this->assertEquals('Testing', $customStatus->getText());
+        $this->assertEquals($plusTwoDaysDate->getTimestamp(), $customStatus->getExpirationDate()->getTimestamp());
+        sleep(1);
 
         $response = $this->mmClient->unsetCustomStatus($this->userId);
         $this->assertEquals('OK', $response['status']);

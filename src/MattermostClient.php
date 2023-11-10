@@ -1,6 +1,7 @@
 <?php
 namespace Flynn314\Mattermost;
 
+use Flynn314\Mattermost\Entity\CustomStatus;
 use Flynn314\Mattermost\Exception\MattermostClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Client\ClientInterface;
@@ -261,6 +262,17 @@ readonly class MattermostClient
         return $this->postWebhook($data, $webhookKey);
     }
 
+    public function getCustomStatus(string $userId): ?CustomStatus
+    {
+        $user = $this->getUser($userId);
+        $cs = json_decode($user['props']['customStatus'] ?? '[]', true);
+        if (!$cs) {
+            return null;
+        }
+
+        return new CustomStatus($cs['emoji'], $cs['text'], new \DateTimeImmutable($cs['expires_at']));
+    }
+
     public function setCustomStatus(string $userId, string $emoji, string $text, ?\DateTimeInterface $expiration = null): array
     {
         $data = [];
@@ -285,6 +297,27 @@ readonly class MattermostClient
         return $this->request(
             method: 'delete',
             uri: sprintf('api/v4/users/%s/status/custom', $userId),
+        );
+    }
+
+    public function getUser(string $userId): array
+    {
+        $users = $this->getUsers([$userId]);
+
+        return end($users);
+    }
+
+    public function getUsers(
+        array $userIds,
+        // todo ?int $timestamp = null
+    ): array
+    {
+        // $timestamp *= 1000;
+
+        return $this->request(
+            method: 'post',
+            uri: 'api/v4/users/ids',
+            data: $userIds,
         );
     }
 
