@@ -14,9 +14,9 @@ class ClientTest extends TestCase
     private string $channel;
     private string $userId;
 
-    public function __construct($name = null, array $data = [], $dataName = '')
+    public function __construct($name = null)
     {
-        parent::__construct($name, $data, $dataName);
+        parent::__construct($name);
 
         $baseUrl = $_ENV['MM_BASE_URL'];
         $token = $_ENV['MM_TOKEN'];
@@ -44,6 +44,24 @@ class ClientTest extends TestCase
 
         $response = $this->mmClient->unsetCustomStatus($this->userId);
         $this->assertEquals('OK', $response['status']);
+    }
+
+    /**
+     * vendor/bin/phpunit --filter=testChannelHeaderUpdate
+     */
+    public function testChannelHeaderUpdate(): void
+    {
+        $text = 'Header update 1';
+        $response = $this->mmClient->setChannelHeader($this->channel, $text);
+        $this->assertEquals($text, $response['header']);
+        sleep(2);
+        $text = 'Header update 2';
+        $response = $this->mmClient->setChannelHeader($this->channel, $text);
+        $this->assertEquals($text, $response['header']);
+        sleep(2);
+        $text = '';
+        $response = $this->mmClient->setChannelHeader($this->channel, $text);
+        $this->assertEquals($text, $response['header']);
     }
 
     public function testMessageSend(): void
