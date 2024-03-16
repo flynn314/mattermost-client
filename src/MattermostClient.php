@@ -25,12 +25,10 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function messagePost(string $channelId, string $message, ?string $rootId = null): array
+    public function messagePost(string $channelId, string $message, ?string $rootId = null, array $data = []): array
     {
-        $data = [
-            'channel_id' => $channelId,
-            'message' => $message,
-        ];
+        $data['channel_id'] = $channelId;
+        $data['message'] = $message;
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
