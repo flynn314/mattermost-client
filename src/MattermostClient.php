@@ -320,6 +320,15 @@ readonly class MattermostClient
         );
     }
 
+    public function setChannelPurpose(string $channelId, string $text): array
+    {
+        return $this->request(
+            method: 'put',
+            uri: sprintf('api/v4/channels/%s/patch', $channelId),
+            data: ['purpose' => $text],
+        );
+    }
+
     public function getUser(string $userId): array
     {
         $users = $this->getUsers([$userId]);
