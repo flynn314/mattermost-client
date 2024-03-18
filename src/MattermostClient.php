@@ -234,6 +234,19 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
+    public function addReaction(string $postId, string $emojiName, string $userId): array
+    {
+        return $this->request('post', 'api/v4/reactions', [
+            'user_id' => $userId,
+            'post_id' => $postId,
+            'emoji_name' => $emojiName,
+            // 'create_at' => 0,
+        ]);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
     public function deletePost(string $messageId): array
     {
         return $this->request('delete', 'api/v4/posts/' . $messageId);
