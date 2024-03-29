@@ -350,6 +350,20 @@ readonly class MattermostClient
         );
     }
 
+    public function typingIndicatorStart(string $userId, string $channelId, string|null $rootId = null): array
+    {
+        $data = ['channel_id' => $channelId];
+        if ($rootId) {
+            $data['parent_id'] = $rootId;
+        }
+
+        return $this->request(
+            method: 'post',
+            uri: sprintf('api/v4/users/%s/typing', $userId),
+            data: $data,
+        );
+    }
+
     /**
      * @throws MattermostClientException
      */

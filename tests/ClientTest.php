@@ -141,4 +141,13 @@ class ClientTest extends TestCase
         ], $_ENV['MM_TOKEN_WEBHOOK']);
         $this->assertEquals('ok', $response['message']);
     }
+
+    /**
+     * vendor/bin/phpunit --filter=testTypingIndicator
+     */
+    public function testTypingIndicator(): void
+    {
+        $response = $this->mmClient->typingIndicatorStart($this->userId, $this->channel);
+        $this->assertEquals('OK', $response['status']);
+    }
 }
