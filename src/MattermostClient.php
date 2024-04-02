@@ -276,6 +276,10 @@ readonly class MattermostClient
     public function getCustomStatus(string $userId): ?CustomStatus
     {
         $user = $this->getUser($userId);
+        if (!$user) {
+            return null;
+        }
+
         $cs = json_decode($user['props']['customStatus'] ?? '[]', true);
         if (!$cs) {
             return null;
