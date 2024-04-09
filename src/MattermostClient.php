@@ -329,23 +329,25 @@ readonly class MattermostClient
         );
     }
 
-    public function setUserPreference(string $userId, string $categoryName, string $name, string|null $value): array
+    public function setUserPreference(string $userId, string $categoryName, string $name, string|array|null $value): array
     {
         return $this->request(
             method: 'put',
             uri: sprintf('api/v4/users/%s/preferences', $userId),
             data: [
-                'user_id' => $userId,
-                'category' => $categoryName,
-                'name' => $name,
-                'value' => $value,
+                [
+                    'user_id' => $userId,
+                    'category' => $categoryName,
+                    'name' => $name,
+                    'value' => is_array($value) ? json_encode($value) : $value,
+                ],
             ],
         );
     }
 
     public function setUserTheme(string $userId, array $value): array
     {
-        return $this->setUserPreference(userId: $userId, categoryName: 'theme', name: '', value: json_encode($value));
+        return $this->setUserPreference(userId: $userId, categoryName: 'theme', name: '', value: $value);
     }
 
     public function getUser(string $userId): array
