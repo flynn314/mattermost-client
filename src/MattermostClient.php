@@ -343,9 +343,9 @@ readonly class MattermostClient
         );
     }
 
-    public function setUserTheme(string $userId, string $value): array
+    public function setUserTheme(string $userId, array $value): array
     {
-        return $this->setUserPreference(userId: $userId, categoryName: 'theme', name: '', value: $value);
+        return $this->setUserPreference(userId: $userId, categoryName: 'theme', name: '', value: json_encode($value));
     }
 
     public function getUser(string $userId): array
