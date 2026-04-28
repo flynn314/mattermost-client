@@ -67,7 +67,7 @@ class ClientTest extends TestCase
     public function testMessageSend(): void
     {
         $message = 'Simple test at ' . date('H:i:s');
-        $response = $this->mmClient->messagePost($this->channel, $message);
+        $response = $this->mmClient->postMessage($this->channel, $message);
 
         $this->assertEquals($message, $response['message']);
     }
@@ -75,16 +75,16 @@ class ClientTest extends TestCase
     public function testMessageEdit(): void
     {
         $message = 'Simple test at ' . date('H:i:s');
-        $response = $this->mmClient->messagePost($this->channel, $message);
+        $response = $this->mmClient->postMessage($this->channel, $message);
         $messageId = $response['id'];
 
         sleep(5);
         $message = 'Simple test at ' . date('H:i:s');
-        $this->mmClient->messageEdit($messageId, $message);
+        $this->mmClient->updateMessageText($messageId, $message);
 
         sleep(5);
         $message = 'Simple test at ' . date('H:i:s');
-        $response = $this->mmClient->messageEdit($messageId, $message);
+        $response = $this->mmClient->updateMessageText($messageId, $message);
 
         $this->assertEquals($message, $response['message']);
     }
@@ -94,7 +94,7 @@ class ClientTest extends TestCase
         $name = 'screw_propelled_vehicle.gif';
         $filePath = dirname(__DIR__).'/tests/resources/' . $name;
 
-        $response = $this->mmClient->filePost($this->channel, $filePath, 'Test from package');
+        $response = $this->mmClient->postFile($this->channel, $filePath, 'Test from package');
 
         $this->assertEquals($name, $response['metadata']['files'][0]['name']);
     }
@@ -105,21 +105,21 @@ class ClientTest extends TestCase
         $filePath = dirname(__DIR__).'/tests/resources/' . $name;
         $fileData = file_get_contents($filePath);
 
-        $response = $this->mmClient->filePostBinary($this->channel, $fileData, 'test_binary_file.gif');
+        $response = $this->mmClient->postBinary($this->channel, $fileData, 'test_binary_file.gif');
 
         $this->assertEquals($name, $response['metadata']['files'][0]['name']);
     }
 
     public function testDelete(): void
     {
-        $response = $this->mmClient->messagePost($this->channel, 'This message should be delete after 5sec');
+        $response = $this->mmClient->postMessage($this->channel, 'This message should be delete after 5sec');
         sleep(1);
         $this->mmClient->deletePost($response['id']);
 
         $name = 'screw_propelled_vehicle.gif';
         $filePath = dirname(__DIR__).'/tests/resources/' . $name;
 
-        $response = $this->mmClient->filePost($this->channel, $filePath, 'Should be delete shortly, also');
+        $response = $this->mmClient->postFile($this->channel, $filePath, 'Should be delete shortly, also');
         sleep(3);
         $this->mmClient->deletePost($response['id']);
 

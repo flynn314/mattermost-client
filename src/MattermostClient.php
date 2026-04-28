@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace Flynn314\Mattermost;
 
 use Flynn314\Mattermost\Entity\CustomStatus;
@@ -17,7 +19,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function messageGet(string $messageId): array
+    public function getMessage(string $messageId): array
     {
         return $this->request('get', 'api/v4/posts'.$messageId);
     }
@@ -25,7 +27,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function messagePost(string $channelId, string $message, ?string $rootId = null, array $data = []): array
+    public function postMessage(string $channelId, string $message, string|null $rootId = null, array $data = []): array
     {
         $data['channel_id'] = $channelId;
         $data['message'] = $message;
@@ -33,18 +35,15 @@ readonly class MattermostClient
             $data['root_id'] = $rootId;
         }
 
-        return $this->dataPost($data);
+        return $this->post($data);
     }
 
-    public function messagePostWithFace(string $channelId, string $message, ?string $rootId = null, ?string $overrideUsername = null, ?string $overrideAvatar = null): array
+    /**
+     * @throws MattermostClientException
+     */
+    public function postMessageWithFace(string $channelId, string $message, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null): array
     {
-        $data = [
-            'channel_id' => $channelId,
-            'message' => $message,
-        ];
-        if ($rootId) {
-            $data['root_id'] = $rootId;
-        }
+        $data = [];
         if ($overrideAvatar || $overrideUsername) {
             $data['props'] = [
                 'from_bot' => "true",
@@ -58,63 +57,65 @@ readonly class MattermostClient
             }
         }
 
-        return $this->dataPost($data);
-    }
-
-    /**
-     * This method will work only with Laravel
-     * @throws MattermostClientException
-     */
-    public function messagePostToGeneral(string $message, ?string $rootId = null): array
-    {
-        return $this->messagePost(config('mattermost.channel.general'), $message, $rootId);
+        return $this->postMessage($channelId, $message, $rootId, $data);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function messageEdit(string $messageId, string $message): array
+    public function postEphemeral(string $channelId, string $message, string|null $rootId = null, array $data = []): array
     {
-        $data = [
-            'message' => $message,
-        ];
+        $data['channel_id'] = $channelId;
+        $data['message'] = $message;
+        if (null !== $rootId) {
+            $data['root_id'] = $rootId;
+        }
 
+        return $this->request('post', 'api/v4/posts/ephemeral', $data);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function updateMessage(string $messageId, array $data = []): array
+    {
         return $this->request('put', sprintf('api/v4/posts/%s/patch', $messageId), $data);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function filePost(string $channelId, string $file, ?string $caption = null, ?string $rootId = null): array
+    public function updateMessageText(string $messageId, string $text, array $data = []): array
     {
-        return $this->filePostGallery($channelId, [$file], $caption, $rootId);
+        $data['message'] = $text;
+
+        return $this->updateMessage($messageId, $data);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function filePostBinary(string $channelId, string $fileData, string $filename, ?string $caption = null, ?string $rootId = null, ?string $overrideUsername = null, ?string $overrideAvatar = null): array
+    public function postFile(string $channelId, string $file, string|null $caption = null, string|null $rootId = null): array
     {
-        return $this->filePostGalleryWithFace($channelId, [$filename => $fileData], $caption, $rootId, $overrideUsername, $overrideAvatar);
-    }
-
-    /**
-     * This method requires Laravel config
-     * @throws MattermostClientException
-     */
-    public function filePostToGeneral(string $file, ?string $caption = null, ?string $rootId = null): array
-    {
-        return $this->filePost(config('mattermost.channel.general'), $file, $caption, $rootId);
+        return $this->postGallery($channelId, [$file], $caption, $rootId);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function filePostGallery(string $channelId, array $files, ?string $caption = null, ?string $rootId = null): array
+    public function postBinary(string $channelId, string $fileData, string $filename, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null): array
+    {
+        return $this->postGalleryWithFace($channelId, [$filename => $fileData], $caption, $rootId, $overrideUsername, $overrideAvatar);
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
+    public function postGallery(string $channelId, array $files, string|null $caption = null, string|null $rootId = null): array
     {
         $filesIds = [];
         foreach ($files as $file) {
-            $file = $this->fileUpload($channelId, $file);
+            $file = $this->uploadFile($channelId, $file);
             $filesIds[] = $file['id'];
             if (count($filesIds) >= 10) {
                 break;
@@ -132,17 +133,17 @@ readonly class MattermostClient
             $data['message'] = $caption;
         }
 
-        return $this->dataPost($data);
+        return $this->post($data);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function filePostGalleryWithFace(string $channelId, array $files, ?string $caption = null, ?string $rootId = null, ?string $overrideUsername = null, ?string $overrideAvatar = null): array
+    public function postGalleryWithFace(string $channelId, array $files, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null): array
     {
         $filesIds = [];
         foreach ($files as $filename => $fileData) {
-            $file = $this->fileUploadBinary($channelId, $fileData, $filename);
+            $file = $this->uploadBinary($channelId, $fileData, $filename);
             $filesIds[] = $file['id'];
             if (count($filesIds) >= 10) {
                 break;
@@ -173,22 +174,13 @@ readonly class MattermostClient
             }
         }
 
-        return $this->dataPost($data);
-    }
-
-    /**
-     * This method requires Laravel config
-     * @throws MattermostClientException
-     */
-    public function filePostGalleryToGeneral(string $channelId, array $files, ?string $caption = null, ?string $rootId = null): array
-    {
-        return $this->filePostGallery(config('mattermost.channel.general'), $files, $caption, $rootId);
+        return $this->post($data);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function fileUpload(string $channelId, string $file): array
+    public function uploadFile(string $channelId, string $file): array
     {
         //if (strstr($file, 'https://') || strstr($file, 'http://')) {
             $filename = basename($file);
@@ -211,7 +203,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function fileUploadBinary(string $channelId, string $fileData, string $filename, array $data = []): array
+    public function uploadBinary(string $channelId, string $fileData, string $filename, array $data = []): array
     {
         $data['binary'] = $fileData;
 
@@ -223,22 +215,13 @@ readonly class MattermostClient
     }
 
     /**
-     * This method requires Laravel config
      * @throws MattermostClientException
      */
-    public function fileUploadToGeneral(string $file): array
-    {
-        return $this->fileUpload(config('mattermost.channel.general'), $file);
-    }
-
-    /**
-     * @throws MattermostClientException
-     */
-    public function addReaction(string $postId, string $emojiName, string $userId): array
+    public function setReaction(string $postId, string $userId, string $emojiName): array
     {
         return $this->request('post', 'api/v4/reactions', [
-            'user_id' => $userId,
             'post_id' => $postId,
+            'user_id' => $userId,
             'emoji_name' => $emojiName,
             // 'create_at' => 0,
         ]);
@@ -255,7 +238,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function dataPost(array $data): array
+    public function post(array $data): array
     {
         return $this->request('post', 'api/v4/posts', $data);
     }
@@ -273,7 +256,7 @@ readonly class MattermostClient
         return $this->postWebhook($data, $webhookKey);
     }
 
-    public function getCustomStatus(string $userId): ?CustomStatus
+    public function getCustomStatus(string $userId): CustomStatus|null
     {
         $user = $this->getUser($userId);
         $cs = json_decode($user['props']['customStatus'] ?? '[]', true);
@@ -284,7 +267,7 @@ readonly class MattermostClient
         return new CustomStatus($cs['emoji'], $cs['text'], new \DateTimeImmutable($cs['expires_at']));
     }
 
-    public function setCustomStatus(string $userId, string $emoji, string $text, ?\DateTimeInterface $expiration = null): array
+    public function setCustomStatus(string $userId, string $emoji, string $text, \DateTimeInterface|null $expiration = null): array
     {
         $data = [];
         $data['emoji'] = $emoji;
@@ -303,6 +286,9 @@ readonly class MattermostClient
         );
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function unsetCustomStatus(string $userId): array
     {
         return $this->request(
@@ -311,24 +297,41 @@ readonly class MattermostClient
         );
     }
 
+    /**
+     * @throws MattermostClientException
+     */
+    public function updateChannel(string $channelId, array $data): array
+    {
+        return $this->request(
+            method: 'put',
+            uri: sprintf('api/v4/channels/%s/patch', $channelId),
+            data: $data,
+        );
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
     public function setChannelHeader(string $channelId, string $text): array
     {
-        return $this->request(
-            method: 'put',
-            uri: sprintf('api/v4/channels/%s/patch', $channelId),
-            data: ['header' => $text],
-        );
+        return $this->updateChannel($channelId, [
+            'header' => $text,
+        ]);
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function setChannelPurpose(string $channelId, string $text): array
     {
-        return $this->request(
-            method: 'put',
-            uri: sprintf('api/v4/channels/%s/patch', $channelId),
-            data: ['purpose' => $text],
-        );
+        return $this->updateChannel($channelId, [
+            'purpose' => $text,
+        ]);
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function setUserPreference(string $userId, string $categoryName, string $name, string|array|null $value): array
     {
         return $this->request(
@@ -345,11 +348,17 @@ readonly class MattermostClient
         );
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function setUserTheme(string $userId, array $value): array
     {
         return $this->setUserPreference(userId: $userId, categoryName: 'theme', name: '', value: $value);
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function getUser(string $userId): array
     {
         $users = $this->getUsers([$userId]);
@@ -357,6 +366,9 @@ readonly class MattermostClient
         return (array) end($users);
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function getUsers(
         array $userIds,
         // todo ?int $timestamp = null
@@ -371,6 +383,9 @@ readonly class MattermostClient
         );
     }
 
+    /**
+     * @throws MattermostClientException
+     */
     public function typingIndicatorStart(string $userId, string $channelId, string|null $rootId = null): array
     {
         $data = ['channel_id' => $channelId];
