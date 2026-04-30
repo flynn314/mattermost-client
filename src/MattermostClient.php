@@ -103,9 +103,9 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function postBinary(string $channelId, string $fileData, string $filename, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null): array
+    public function postBinary(string $channelId, string $fileData, string $filename, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null, array $data = []): array
     {
-        return $this->postGalleryWithFace($channelId, [$filename => $fileData], $caption, $rootId, $overrideUsername, $overrideAvatar);
+        return $this->postGalleryWithFace($channelId, [$filename => $fileData], $caption, $rootId, $overrideUsername, $overrideAvatar, $data);
     }
 
     /**
@@ -139,7 +139,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function postGalleryWithFace(string $channelId, array $files, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null): array
+    public function postGalleryWithFace(string $channelId, array $files, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null, array $data = []): array
     {
         $filesIds = [];
         foreach ($files as $filename => $fileData) {
@@ -150,10 +150,8 @@ readonly class MattermostClient
             }
         }
 
-        $data = [
-            'channel_id' => $channelId,
-            'file_ids' => $filesIds,
-        ];
+        $data['channel_id'] = $channelId;
+        $data['file_ids'] = $filesIds;
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
