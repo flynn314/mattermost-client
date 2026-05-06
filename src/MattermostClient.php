@@ -384,6 +384,18 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
+    public function getAvatar(string $userId): string
+    {
+        return $this->request(
+            method: 'get',
+            uri: sprintf('api/v4/users/%s/image', $userId),
+            raw: true,
+        );
+    }
+
+    /**
+     * @throws MattermostClientException
+     */
     public function typingIndicatorStart(string $userId, string $channelId, string|null $rootId = null): array
     {
         $data = ['channel_id' => $channelId];
@@ -401,7 +413,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    private function request(string $method, string $uri, array $data = [], array $header = []): array
+    private function request(string $method, string $uri, array $data = [], array $header = [], bool $raw = false): array|string
     {
         $uri = sprintf('%s/%s', $this->baseUrl, $uri);
 
@@ -424,7 +436,9 @@ readonly class MattermostClient
             // todo PSR-7
             $response = $this->httpClient->request($method, $uri, $options);
             $content = $response->getBody()->getContents();
-            if ('ok' === $content) {
+            if ($raw) {
+                return $content;
+            } elseif ('ok' === $content) {
                 return [
                     'message' => $content,
                 ];
