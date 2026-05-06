@@ -384,7 +384,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function getAvatar(string $userId): string
+    public function getAvatarBinary(string $userId): string
     {
         return $this->request(
             method: 'get',
