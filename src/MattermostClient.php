@@ -27,10 +27,10 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function postMessage(string $channelId, string $message, string|null $rootId = null, array $data = []): array
+    public function postMessage(string $channelId, string $text, string|null $rootId = null, array $data = []): array
     {
         $data['channel_id'] = $channelId;
-        $data['message'] = $message;
+        $data['message'] = $text;
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
@@ -41,7 +41,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function postMessageWithFace(string $channelId, string $message, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null): array
+    public function postMessageWithFace(string $channelId, string $text, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null): array
     {
         $data = [];
         if ($overrideAvatar || $overrideUsername) {
@@ -57,16 +57,16 @@ readonly class MattermostClient
             }
         }
 
-        return $this->postMessage($channelId, $message, $rootId, $data);
+        return $this->postMessage($channelId, $text, $rootId, $data);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function postEphemeral(string $channelId, string $message, string|null $rootId = null, array $data = []): array
+    public function postEphemeral(string $channelId, string $text, string|null $rootId = null, array $data = []): array
     {
         $data['channel_id'] = $channelId;
-        $data['message'] = $message;
+        $data['message'] = $text;
         if (null !== $rootId) {
             $data['root_id'] = $rootId;
         }
@@ -95,23 +95,23 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function postFile(string $channelId, string $file, string|null $caption = null, string|null $rootId = null): array
+    public function postFile(string $channelId, string $file, string|null $text = null, string|null $rootId = null): array
     {
-        return $this->postGallery($channelId, [$file], $caption, $rootId);
+        return $this->postGallery($channelId, [$file], $text, $rootId);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function postBinary(string $channelId, string $fileData, string $filename, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null, array $data = []): array
+    public function postBinary(string $channelId, string $fileData, string $filename, string|null $text = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null, array $data = []): array
     {
-        return $this->postGalleryWithFace($channelId, [$filename => $fileData], $caption, $rootId, $overrideUsername, $overrideAvatar, $data);
+        return $this->postGalleryWithFace($channelId, [$filename => $fileData], $text, $rootId, $overrideUsername, $overrideAvatar, $data);
     }
 
     /**
      * @throws MattermostClientException
      */
-    public function postGallery(string $channelId, array $files, string|null $caption = null, string|null $rootId = null): array
+    public function postGallery(string $channelId, array $files, string|null $text = null, string|null $rootId = null): array
     {
         $filesIds = [];
         foreach ($files as $file) {
@@ -129,8 +129,8 @@ readonly class MattermostClient
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
-        if ($caption) {
-            $data['message'] = $caption;
+        if ($text) {
+            $data['message'] = $text;
         }
 
         return $this->post($data);
@@ -139,7 +139,7 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function postGalleryWithFace(string $channelId, array $files, string|null $caption = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null, array $data = []): array
+    public function postGalleryWithFace(string $channelId, array $files, string|null $text = null, string|null $rootId = null, string|null $overrideUsername = null, string|null $overrideAvatar = null, array $data = []): array
     {
         $filesIds = [];
         foreach ($files as $filename => $fileData) {
@@ -155,8 +155,8 @@ readonly class MattermostClient
         if ($rootId) {
             $data['root_id'] = $rootId;
         }
-        if ($caption) {
-            $data['message'] = $caption;
+        if ($text) {
+            $data['message'] = $text;
         }
 
         if ($overrideAvatar || $overrideUsername) {
@@ -191,7 +191,7 @@ readonly class MattermostClient
         // $data['channel_id'] = $channelId;
         // $data['client_ids'] = [];
 
-        $data =  $this->request('post', 'api/v4/files?channel_id='.$channelId.'&filename='.$filename, $data, [
+        $data = $this->request('post', sprintf('api/v4/files?channel_id=%s&filename=%s', $channelId, $filename), $data, [
             'enctype' => 'multipart/form-data'
         ]);
 
@@ -205,7 +205,7 @@ readonly class MattermostClient
     {
         $data['binary'] = $fileData;
 
-        $response = $this->request('post', 'api/v4/files?channel_id='.$channelId.'&filename='.$filename, $data, [
+        $response = $this->request('post', sprintf('api/v4/files?channel_id=%s&filename=%s', $channelId, $filename), $data, [
             'enctype' => 'multipart/form-data'
         ]);
 
