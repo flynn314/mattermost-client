@@ -63,12 +63,15 @@ readonly class MattermostClient
     /**
      * @throws MattermostClientException
      */
-    public function postEphemeral(string $channelId, string $text, string|null $rootId = null, array $data = []): array
+    public function postEphemeral(string $channelId, string $userId, string $text, string|null $rootId = null, array $data = []): array
     {
-        $data['channel_id'] = $channelId;
-        $data['message'] = $text;
+        $data['user_id'] = $userId;
+        $data['post'] = [
+            'channel_id' => $channelId,
+            'message' => $text,
+        ];
         if (null !== $rootId) {
-            $data['root_id'] = $rootId;
+            $data['post']['root_id'] = $rootId;
         }
 
         return $this->request('post', 'api/v4/posts/ephemeral', $data);
